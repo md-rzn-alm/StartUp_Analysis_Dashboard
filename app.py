@@ -10,6 +10,13 @@ from pandas.core.methods.describe import select_describe_func
 st.set_page_config(layout='wide' , page_title='StartUp Analysis')
 
 df = pd.read_csv('StartUp_Cleaned.csv')
+df['startup'] = df['startup'].replace({
+    'Oyo' : 'OYO Rooms',
+    'Oyorooms' : 'OYO Rooms',
+    'OYO Rooms' : 'OYO Rooms',
+    'Oyo Rooms' : 'OYO Rooms',
+    'OyoRooms' : 'OYO Rooms',
+    })
 
 st.sidebar.title('🔍 Startup Funding Analysis')
 
@@ -38,13 +45,16 @@ def load_overall_analysis():
     col1,col2,col3,col4 = st.columns(4)
 
     with col1:
-        st.metric('Total Funding', str(total) + '  Cr')
+        st.metric('Total Funding', f'₹{total:,.0f} Cr')
+
     with col2:
-        st.metric('Max Funding', str(max_funding) + '  Cr')
+        st.metric('Max Funding', f'₹{max_funding:,.0f} Cr')
+
     with col3:
-        st.metric('Average Funding' , str(round(avg_funding)) + '  Cr')
+        st.metric('Average Funding', f'₹{round(avg_funding):,.0f} Cr')
+
     with col4:
-        st.metric("Total Startups" , str(num_startup) )
+        st.metric('Total Startups', f'{num_startup:,}')
 
     st.header("📊 Month-On-Month Graph")
     st.caption(" Funding Trends Over Time ")
@@ -59,6 +69,7 @@ def load_overall_analysis():
     temp_df['Month-Year'] = temp_df['month'].astype('str') + '-' + temp_df['year'].astype('str')
 
     fig3 = px.line(temp_df, x="Month-Year", y="amount")
+
     st.plotly_chart(fig3, use_container_width=True)
 
     col1, col2 ,col3  = st.columns(3)
@@ -66,27 +77,34 @@ def load_overall_analysis():
         df['startup'] = df['startup'].str.replace('Flipkart.com', 'Flipkart')
         max_funding = df.groupby('startup')['amount'].max().sort_values(ascending=False).head(5)
 
-        fig_1 = px.bar(max_funding , title = "Top 5 Invested Startups")
+        fig_1 = px.bar(max_funding , title = "📊 Top 5 Invested Startups")
         # hide axis labels
         fig_1.update_layout(xaxis_title=None, yaxis_title=None)
         # show in streamlit
         st.plotly_chart(fig_1, use_container_width=True)
+        st.markdown(
+            "📌 **Insight:** Rapido Bike Taxi attracted the highest funding (~35k+ Cr).")
 
     with col2:
         vertical_amount = df.groupby('vertical')['amount'].sum().sort_values(ascending=False).head(5)
 
-        fig0 = px.bar(vertical_amount , title = "Top 5 Invested Sectors" )
+        fig0 = px.bar(vertical_amount , title = "🏢 Top 5 Invested Sectors" )
         # hide axis labels
         fig0.update_layout(xaxis_title=None, yaxis_title=None)
         # show in streamlit
         st.plotly_chart(fig0, use_container_width=True)
+        st.markdown(
+            "📌 **Insight:** E-Commerce is the dominant sector, attracting the largest investment (~72k Cr).")
 
     with col3:
         city_invested = df.groupby('city')['amount'].sum().sort_values(ascending=False).head(5)
 
-        fig_b = px.pie(city_invested , names=city_invested.index, values='amount' ,title="Top 5 Invested Cities ")
+        fig_b = px.pie(city_invested , names=city_invested.index, values='amount' ,title="🌍 Top 5 Invested Cities ")
         #show in streamlit
         st.plotly_chart(fig_b, use_container_width=True)
+        st.markdown(
+            "📌 **Insight:** Bengaluru dominates the startup funding landscape with 58.4% of total investments among "
+            "all the cities.")
 
     col1, col2 = st.columns(2)
 
@@ -96,9 +114,11 @@ def load_overall_analysis():
        fig_s = px.pie(stage_invested ,
                       names=stage_invested.index ,
                       values='amount',
-                      title="Funding By Stage ")
+                      title="🤝 Funding By Stage ")
        #show in streamlit
        st.plotly_chart(fig_s, use_container_width=True)
+       st.markdown(
+           "📌 **Insight:** Private Equity dominates the funding landscape, accounting for 76.6% of total investments.")
 
     with col2:
         funding_trend = df.groupby('year')['amount'].sum().reset_index()
@@ -107,13 +127,13 @@ def load_overall_analysis():
             funding_trend,
             x='year',
             y='amount',
-            title="Year on Year",
+            title="📈 Year on Year",
             markers=True
         )
 
         st.plotly_chart(fig, use_container_width=True)
         st.markdown(
-            "📌 **Insight:** Funding shows fluctuations over time, reflecting market cycles and investor confidence.")
+            "📌 **Insight:**  Startup funding peaked in 2017 and 2019, while 2020 witnessed a sharp decline.")
 
 def load_investor_details(investor):
     st.title("Investors Details")
@@ -129,19 +149,19 @@ def load_investor_details(investor):
     with col1:
         #biggest investment
         big_series = df[df['investors'].str.contains(investor)].groupby('startup')['amount'].sum().sort_values(ascending=False).head(5)
-        fig = px.bar(big_series ,title="Biggest Investment")
+        fig = px.bar(big_series ,title="📊 Biggest Investment")
         st.plotly_chart(fig , use_container_width=True)
 
     with col2:
          fig = df[df['investors'].str.contains(investor)].groupby('vertical')['amount'].sum()
-         fig_px = px.pie(fig, values='amount', names=fig.index , title = "Sector Invested in")
+         fig_px = px.pie(fig, values='amount', names=fig.index , title = "🏢 Sector Invested in")
          st.plotly_chart(fig_px, use_container_width=True)
 
     col1, col2 , col3 = st.columns(3)
 
     with col1:
         fig2 = df[df['investors'].str.contains(investor)].groupby('round')['amount'].sum()
-        fig_px2 = px.pie(fig2, values='amount', names=fig2.index , title= "Investment by Round")
+        fig_px2 = px.pie(fig2, values='amount', names=fig2.index , title= "🤝 Investment by Round")
         st.plotly_chart(fig_px2, use_container_width=True)
 
     with col2:
@@ -150,7 +170,7 @@ def load_investor_details(investor):
         city_counts = city_df['city'].value_counts().reset_index()
         city_counts.columns = ['city', 'count']
         # create pie chart
-        fig = px.pie(city_counts, names='city', values='count' ,title='Investment cities')
+        fig = px.pie(city_counts, names='city', values='count' ,title=' 🌍 Investment cities')
         st.plotly_chart(fig, use_container_width=True)
 
     with col3:
@@ -161,7 +181,7 @@ def load_investor_details(investor):
             year_series,
             x=year_series.index,
             y='amount',
-            title=" Funding Trend Over Time",
+            title="📈 Funding Trend Over Time",
             markers=True
         )
         st.plotly_chart(fig, use_container_width=True)
@@ -182,17 +202,17 @@ def load_startup_details(startup):
 
     with col1:
         fig3 = df[df['startup'].str.contains(startup)].groupby('investors')['amount'].sum().sort_values(ascending=False)
-        fig_px3 = px.pie(fig3, values='amount', names=fig3.index, title="Investors Invested")
+        fig_px3 = px.pie(fig3, values='amount', names=fig3.index, title="📊 Investors Invested")
         st.plotly_chart(fig_px3, use_container_width=True)
 
     with col2:
         fig3 = df[df['startup'].str.contains(startup)].groupby('round')['amount'].sum().sort_values(ascending=False)
-        fig_px3 = px.pie(fig3, values='amount', names=fig3.index , title= "Invested Stage")
+        fig_px3 = px.pie(fig3, values='amount', names=fig3.index , title= "🤝 Invested Stage")
         st.plotly_chart(fig_px3, use_container_width=True)
 
     with col3:
         fig3 = df[df['startup'].str.contains(startup)].groupby('city')['amount'].sum().sort_values(ascending=False)
-        fig_px3 = px.pie(fig3, values='amount', names=fig3.index ,title = "Invested City")
+        fig_px3 = px.pie(fig3, values='amount', names=fig3.index ,title = "🌍 Invested City")
         st.plotly_chart(fig_px3, use_container_width=True)
 
 
