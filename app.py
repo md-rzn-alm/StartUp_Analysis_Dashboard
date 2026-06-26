@@ -16,6 +16,7 @@ df['startup'] = df['startup'].replace({
     'OYO Rooms' : 'OYO Rooms',
     'Oyo Rooms' : 'OYO Rooms',
     'OyoRooms' : 'OYO Rooms',
+    'Flipkart.com' : 'Flipkart'
     })
 
 st.sidebar.title('🔍 Startup Funding Analysis')
@@ -69,7 +70,6 @@ def load_overall_analysis():
     temp_df['Month-Year'] = temp_df['month'].astype('str') + '-' + temp_df['year'].astype('str')
 
     fig3 = px.line(temp_df, x="Month-Year", y="amount")
-
     st.plotly_chart(fig3, use_container_width=True)
 
     col1, col2 ,col3  = st.columns(3)
@@ -188,7 +188,7 @@ def load_investor_details(investor):
         st.markdown(
             "📌 **Insight:** Funding shows fluctuations over time, reflecting market cycles and investor confidence.")
 
-option = st.sidebar.selectbox('Select One' , ['Overall Analysis' , 'StartUp' , 'Investor'])
+option = st.sidebar.selectbox('Select One' , ['Overall Analysis' , 'Investor' , 'StartUp' ])
 df['date'] = pd.to_datetime(df['date'])
 
 def load_startup_details(startup):
@@ -203,21 +203,45 @@ def load_startup_details(startup):
     with col1:
         fig3 = df[df['startup'].str.contains(startup)].groupby('investors')['amount'].sum().sort_values(ascending=False)
         fig_px3 = px.pie(fig3, values='amount', names=fig3.index, title="📊 Investors Invested")
-        st.plotly_chart(fig_px3, use_container_width=True)
+        if (fig3.values > 0 ).any():
+            st.plotly_chart(fig_px3, use_container_width=True)
+            st.markdown(
+                "📌 **Insight:**  Investment participation is distributed among multiple investors, "
+                "reflecting varying levels of investor interest and collaboration in funding the startup."
+                )
+        else:
+            st.markdown("   ")
 
     with col2:
         fig3 = df[df['startup'].str.contains(startup)].groupby('round')['amount'].sum().sort_values(ascending=False)
         fig_px3 = px.pie(fig3, values='amount', names=fig3.index , title= "🤝 Invested Stage")
-        st.plotly_chart(fig_px3, use_container_width=True)
+
+        if (fig3.values > 0).any():
+            st.plotly_chart(fig_px3, use_container_width=True)
+            st.markdown(
+                "📌 **Insight:**  Funding activity is concentrated in specific investment stages, indicating the startup's "
+                "position in its growth journey and the type of capital being attracted."
+             )
+        else:
+            st.markdown("   ")
+
 
     with col3:
         fig3 = df[df['startup'].str.contains(startup)].groupby('city')['amount'].sum().sort_values(ascending=False)
         fig_px3 = px.pie(fig3, values='amount', names=fig3.index ,title = "🌍 Invested City")
-        st.plotly_chart(fig_px3, use_container_width=True)
 
+        if (fig3.values > 0).any():
+            st.plotly_chart(fig_px3, use_container_width=True)
+            st.markdown(
+                "📌 **Insight:**  Investments are associated with key startup ecosystems, emphasizing the "
+                "importance of regional business environments and innovation hubs in attracting capital."
+            )
+        else:
+            st.markdown("   ")
 
 if option == 'Overall Analysis':
     load_overall_analysis()
+
 
 elif option == 'StartUp':
     selected_startup = st.sidebar.selectbox('Select Startup' , sorted(df['startup'].unique().tolist()))
